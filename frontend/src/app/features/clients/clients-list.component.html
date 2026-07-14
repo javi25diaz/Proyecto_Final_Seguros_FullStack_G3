@@ -1,0 +1,78 @@
+<div class="page-header">
+  <div>
+    <h1>Clientes</h1>
+    <p>Administración de clientes asegurados</p>
+  </div>
+  <a routerLink="/clients/new" class="btn btn-primary">Nuevo cliente</a>
+</div>
+
+<div class="toolbar">
+  <input
+    type="search"
+    placeholder="Buscar por nombre, identificación, correo o teléfono"
+    [value]="search()"
+    (input)="onSearchChange($any($event.target).value)"
+    aria-label="Buscar clientes"
+  />
+  <select [value]="statusFilter()" (change)="onStatusFilterChange($any($event.target).value)" aria-label="Filtrar por estado">
+    <option value="">Todos los estados</option>
+    <option value="active">Activo</option>
+    <option value="inactive">Inactivo</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="loading-state" *ngIf="loading()">Cargando clientes...</div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="empty-state" *ngIf="clients().length === 0">
+      No se encontraron clientes con los criterios seleccionados.
+    </div>
+
+    <div class="table-wrapper" *ngIf="clients().length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Identificación</th>
+            <th>Teléfono</th>
+            <th>Correo</th>
+            <th>Agente responsable</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let client of clients()">
+            <td>{{ client.name }}</td>
+            <td>{{ client.identification }}</td>
+            <td>{{ client.phone }}</td>
+            <td>{{ client.email }}</td>
+            <td>{{ agentName(client.assignedAgent) }}</td>
+            <td>
+              <app-status-badge [label]="clientStatusMeta(client.status).label" [variant]="clientStatusMeta(client.status).variant"></app-status-badge>
+            </td>
+            <td>
+              <div class="table-actions">
+                <a [routerLink]="['/clients', client._id]" class="btn btn-secondary btn-sm">Ver</a>
+                <a [routerLink]="['/clients', client._id, 'edit']" class="btn btn-secondary btn-sm">Editar</a>
+                <button type="button" class="btn btn-danger btn-sm" (click)="confirmDelete(client)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [meta]="meta()" (pageChange)="onPageChange($event)"></app-pagination>
+  </ng-container>
+</div>
+
+<app-confirm-dialog
+  *ngIf="pendingDelete() as client"
+  title="Eliminar cliente"
+  [message]="'¿Desea eliminar realmente a ' + client.name + '? Esta acción no se puede deshacer.'"
+  [busy]="deleting()"
+  (confirmed)="performDelete()"
+  (cancelled)="cancelDelete()"
+></app-confirm-dialog>

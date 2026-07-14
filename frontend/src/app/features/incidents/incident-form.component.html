@@ -1,0 +1,57 @@
+<div class="page-header">
+  <div>
+    <h1>{{ isEditMode() ? 'Editar siniestro' : 'Nuevo siniestro' }}</h1>
+    <p>Registre el evento asegurado</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 720px;">
+  <div class="loading-state" *ngIf="loading()">Cargando...</div>
+  <div *ngIf="errorMessage()" style="background: var(--color-danger-bg); color: var(--color-danger); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+    {{ errorMessage() }}
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate *ngIf="!loading()">
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="policy">Póliza</label>
+        <select id="policy" formControlName="policy" [class.invalid]="form.controls.policy.invalid && form.controls.policy.touched">
+          <option value="">Seleccione una póliza</option>
+          <option *ngFor="let policy of policies()" [value]="policy._id">{{ policy.policyNumber }}</option>
+        </select>
+        <span class="field-error" *ngIf="form.controls.policy.invalid && form.controls.policy.touched">Debe seleccionar una póliza vigente.</span>
+      </div>
+
+      <div class="form-field">
+        <label for="eventDate">Fecha del evento</label>
+        <input id="eventDate" type="date" formControlName="eventDate" [class.invalid]="form.controls.eventDate.invalid && form.controls.eventDate.touched" />
+        <span class="field-error" *ngIf="form.controls.eventDate.invalid && form.controls.eventDate.touched">La fecha del evento es obligatoria y debe estar dentro de la vigencia de la póliza.</span>
+      </div>
+
+      <div class="form-field">
+        <label for="status">Estado</label>
+        <select id="status" formControlName="status">
+          <option value="reported">Reportado</option>
+          <option value="under_review">En revisión</option>
+          <option value="closed">Cerrado</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label for="evidenceUrl">URL de evidencia (opcional)</label>
+        <input id="evidenceUrl" type="url" formControlName="evidenceUrl" placeholder="https://..." />
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label for="description">Descripción</label>
+      <textarea id="description" rows="3" formControlName="description" [class.invalid]="form.controls.description.invalid && form.controls.description.touched"></textarea>
+      <span class="field-error" *ngIf="form.controls.description.invalid && form.controls.description.touched">La descripción es obligatoria.</span>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="submitting()">{{ submitting() ? 'Guardando...' : 'Guardar' }}</button>
+      <a routerLink="/incidents" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,59 @@
+<div class="page-header">
+  <div>
+    <h1>{{ isEditMode() ? 'Editar usuario' : 'Nuevo usuario' }}</h1>
+    <p>Solo un administrador puede asignar roles</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 560px;">
+  <div class="loading-state" *ngIf="loading()">Cargando...</div>
+  <div *ngIf="errorMessage()" style="background: var(--color-danger-bg); color: var(--color-danger); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+    {{ errorMessage() }}
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate *ngIf="!loading()">
+    <div class="form-field">
+      <label for="name">Nombre completo</label>
+      <input id="name" type="text" formControlName="name" [class.invalid]="form.controls.name.invalid && form.controls.name.touched" />
+      <span class="field-error" *ngIf="form.controls.name.invalid && form.controls.name.touched">El nombre debe tener entre 2 y 100 caracteres.</span>
+    </div>
+
+    <div class="form-field">
+      <label for="email">Correo electrónico</label>
+      <input id="email" type="email" formControlName="email" [class.invalid]="form.controls.email.invalid && form.controls.email.touched" />
+      <span class="field-error" *ngIf="form.controls.email.invalid && form.controls.email.touched">Ingrese un correo válido.</span>
+    </div>
+
+    <div class="form-field">
+      <label for="password">{{ isEditMode() ? 'Nueva contraseña (opcional)' : 'Contraseña' }}</label>
+      <input id="password" type="password" formControlName="password" [class.invalid]="form.controls.password.invalid && form.controls.password.touched" />
+      <span class="field-error" *ngIf="form.controls.password.invalid && form.controls.password.touched">
+        Debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial.
+      </span>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="role">Rol</label>
+        <select id="role" formControlName="role">
+          <option value="guest">Invitado</option>
+          <option value="user">Agente</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label for="status">Estado</label>
+        <select id="status" formControlName="status">
+          <option value="active">Activo</option>
+          <option value="inactive">Inactivo</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="submitting()">{{ submitting() ? 'Guardando...' : 'Guardar' }}</button>
+      <a routerLink="/users" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>

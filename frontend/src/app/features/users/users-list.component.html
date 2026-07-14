@@ -1,0 +1,76 @@
+<div class="page-header">
+  <div>
+    <h1>Usuarios</h1>
+    <p>Administración de usuarios y roles</p>
+  </div>
+  <a routerLink="/users/new" class="btn btn-primary">Nuevo usuario</a>
+</div>
+
+<div class="toolbar">
+  <input
+    type="search"
+    placeholder="Buscar por nombre o correo"
+    [value]="search()"
+    (input)="onSearchChange($any($event.target).value)"
+    aria-label="Buscar usuarios"
+  />
+  <select [value]="roleFilter()" (change)="onRoleFilterChange($any($event.target).value)" aria-label="Filtrar por rol">
+    <option value="">Todos los roles</option>
+    <option value="guest">Invitado</option>
+    <option value="user">Agente</option>
+    <option value="admin">Administrador</option>
+  </select>
+  <select [value]="statusFilter()" (change)="onStatusFilterChange($any($event.target).value)" aria-label="Filtrar por estado">
+    <option value="">Todos los estados</option>
+    <option value="active">Activo</option>
+    <option value="inactive">Inactivo</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="loading-state" *ngIf="loading()">Cargando usuarios...</div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="empty-state" *ngIf="users().length === 0">No se encontraron usuarios con los criterios seleccionados.</div>
+
+    <div class="table-wrapper" *ngIf="users().length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users()">
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td><app-status-badge [label]="userRoleMeta(user.role).label" [variant]="userRoleMeta(user.role).variant"></app-status-badge></td>
+            <td><app-status-badge [label]="userStatusMeta(user.status).label" [variant]="userStatusMeta(user.status).variant"></app-status-badge></td>
+            <td>
+              <div class="table-actions">
+                <a [routerLink]="['/users', user.id]" class="btn btn-secondary btn-sm">Ver</a>
+                <a [routerLink]="['/users', user.id, 'edit']" class="btn btn-secondary btn-sm">Editar</a>
+                <button type="button" class="btn btn-danger btn-sm" [disabled]="isSelf(user)" (click)="confirmDelete(user)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [meta]="meta()" (pageChange)="onPageChange($event)"></app-pagination>
+  </ng-container>
+</div>
+
+<app-confirm-dialog
+  *ngIf="pendingDelete() as user"
+  title="Eliminar usuario"
+  [message]="'¿Desea eliminar realmente a ' + user.name + '? Esta acción no se puede deshacer.'"
+  [busy]="deleting()"
+  (confirmed)="performDelete()"
+  (cancelled)="cancelDelete()"
+></app-confirm-dialog>

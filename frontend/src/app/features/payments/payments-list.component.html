@@ -1,0 +1,77 @@
+<div class="page-header">
+  <div>
+    <h1>Pagos</h1>
+    <p>Historial de pagos registrados</p>
+  </div>
+  <a routerLink="/payments/new" class="btn btn-primary">Nuevo pago</a>
+</div>
+
+<div class="toolbar">
+  <input
+    type="search"
+    placeholder="Buscar por recibo o referencia"
+    [value]="search()"
+    (input)="onSearchChange($any($event.target).value)"
+    aria-label="Buscar pagos"
+  />
+  <select [value]="statusFilter()" (change)="onStatusFilterChange($any($event.target).value)" aria-label="Filtrar por estado">
+    <option value="">Todos los estados</option>
+    <option value="pending">Pendiente</option>
+    <option value="paid">Pagado</option>
+    <option value="reversed">Revertido</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="loading-state" *ngIf="loading()">Cargando pagos...</div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="empty-state" *ngIf="payments().length === 0">No se encontraron pagos con los criterios seleccionados.</div>
+
+    <div class="table-wrapper" *ngIf="payments().length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Recibo</th>
+            <th>Cliente</th>
+            <th>Póliza</th>
+            <th>Monto</th>
+            <th>Fecha</th>
+            <th>Método</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let payment of payments()">
+            <td>{{ payment.receiptNumber }}</td>
+            <td>{{ clientName(payment.client) }}</td>
+            <td>{{ policyNumber(payment.policy) }}</td>
+            <td>B/. {{ payment.amount | number: '1.2-2' }}</td>
+            <td>{{ payment.paymentDate | date: 'shortDate' }}</td>
+            <td>{{ paymentMethodLabels[payment.method] }}</td>
+            <td><app-status-badge [label]="paymentStatusMeta(payment.status).label" [variant]="paymentStatusMeta(payment.status).variant"></app-status-badge></td>
+            <td>
+              <div class="table-actions">
+                <a [routerLink]="['/payments', payment._id]" class="btn btn-secondary btn-sm">Ver</a>
+                <a [routerLink]="['/payments', payment._id, 'edit']" class="btn btn-secondary btn-sm">Editar</a>
+                <button type="button" class="btn btn-danger btn-sm" (click)="confirmDelete(payment)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [meta]="meta()" (pageChange)="onPageChange($event)"></app-pagination>
+  </ng-container>
+</div>
+
+<app-confirm-dialog
+  *ngIf="pendingDelete() as payment"
+  title="Eliminar pago"
+  [message]="'¿Desea eliminar realmente el pago ' + payment.receiptNumber + '? Esta acción no se puede deshacer.'"
+  [busy]="deleting()"
+  (confirmed)="performDelete()"
+  (cancelled)="cancelDelete()"
+></app-confirm-dialog>

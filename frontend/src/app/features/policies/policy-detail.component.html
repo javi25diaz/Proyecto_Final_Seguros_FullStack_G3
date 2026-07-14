@@ -1,0 +1,29 @@
+<div class="loading-state" *ngIf="loading()">Cargando póliza...</div>
+
+<ng-container *ngIf="policy() as p">
+  <div class="page-header">
+    <div>
+      <h1>{{ p.policyNumber }}</h1>
+      <p>{{ insuranceTypeMeta(p.insuranceType).label }}</p>
+    </div>
+    <div class="table-actions">
+      <a [routerLink]="['/policies', p._id, 'edit']" class="btn btn-secondary">Editar</a>
+      <a routerLink="/policies" class="btn btn-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="form-grid">
+      <div>
+        <strong>Cliente:</strong>
+        <span *ngIf="clientRef(p.client) as c"> <a [routerLink]="['/clients', c._id]">{{ c.name }}</a></span>
+      </div>
+      <div><strong>Estado:</strong> <app-status-badge [label]="policyStatusMeta(p.status).label" [variant]="policyStatusMeta(p.status).variant"></app-status-badge></div>
+      <div><strong>Prima:</strong> B/. {{ p.premium | number: '1.2-2' }}</div>
+      <div><strong>Vigencia:</strong> {{ p.startDate | date: 'shortDate' }} – {{ p.endDate | date: 'shortDate' }}</div>
+      <div><strong>Agente responsable:</strong> {{ agentName(p.assignedAgent) }}</div>
+      <div><strong>Cobertura:</strong> {{ p.coverage }}</div>
+    </div>
+    <p *ngIf="p.notes" class="text-muted">{{ p.notes }}</p>
+  </div>
+</ng-container>

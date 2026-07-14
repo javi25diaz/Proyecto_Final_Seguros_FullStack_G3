@@ -1,0 +1,75 @@
+<div class="page-header">
+  <div>
+    <h1>Siniestros</h1>
+    <p>Registro de eventos asegurados</p>
+  </div>
+  <a routerLink="/incidents/new" class="btn btn-primary">Nuevo siniestro</a>
+</div>
+
+<div class="toolbar">
+  <input
+    type="search"
+    placeholder="Buscar por número o descripción"
+    [value]="search()"
+    (input)="onSearchChange($any($event.target).value)"
+    aria-label="Buscar siniestros"
+  />
+  <select [value]="statusFilter()" (change)="onStatusFilterChange($any($event.target).value)" aria-label="Filtrar por estado">
+    <option value="">Todos los estados</option>
+    <option value="reported">Reportado</option>
+    <option value="under_review">En revisión</option>
+    <option value="closed">Cerrado</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="loading-state" *ngIf="loading()">Cargando siniestros...</div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="empty-state" *ngIf="incidents().length === 0">No se encontraron siniestros con los criterios seleccionados.</div>
+
+    <div class="table-wrapper" *ngIf="incidents().length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Cliente</th>
+            <th>Póliza</th>
+            <th>Descripción</th>
+            <th>Fecha del evento</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let incident of incidents()">
+            <td>{{ incident.incidentNumber }}</td>
+            <td>{{ clientName(incident.client) }}</td>
+            <td>{{ policyNumber(incident.policy) }}</td>
+            <td>{{ incident.description }}</td>
+            <td>{{ incident.eventDate | date: 'shortDate' }}</td>
+            <td><app-status-badge [label]="incidentStatusMeta(incident.status).label" [variant]="incidentStatusMeta(incident.status).variant"></app-status-badge></td>
+            <td>
+              <div class="table-actions">
+                <a [routerLink]="['/incidents', incident._id]" class="btn btn-secondary btn-sm">Ver</a>
+                <a [routerLink]="['/incidents', incident._id, 'edit']" class="btn btn-secondary btn-sm">Editar</a>
+                <button type="button" class="btn btn-danger btn-sm" (click)="confirmDelete(incident)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [meta]="meta()" (pageChange)="onPageChange($event)"></app-pagination>
+  </ng-container>
+</div>
+
+<app-confirm-dialog
+  *ngIf="pendingDelete() as incident"
+  title="Eliminar siniestro"
+  [message]="'¿Desea eliminar realmente el siniestro ' + incident.incidentNumber + '? Esta acción no se puede deshacer.'"
+  [busy]="deleting()"
+  (confirmed)="performDelete()"
+  (cancelled)="cancelDelete()"
+></app-confirm-dialog>

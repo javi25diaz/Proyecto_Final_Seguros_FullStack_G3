@@ -1,0 +1,53 @@
+<div class="loading-state" *ngIf="loading()">Cargando notificación...</div>
+
+<ng-container *ngIf="notification() as n">
+  <div class="page-header">
+    <div>
+      <h1>Notificación</h1>
+      <p><app-status-badge [label]="notificationTypeMeta(n.type).label" [variant]="notificationTypeMeta(n.type).variant"></app-status-badge></p>
+    </div>
+    <div class="table-actions">
+      <button type="button" class="btn btn-secondary" *ngIf="!n.isRead" (click)="markAsRead()">Marcar leída</button>
+      <button type="button" class="btn btn-danger" (click)="confirmDelete()">Eliminar</button>
+      <a routerLink="/notifications" class="btn btn-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card" style="max-width: 640px;">
+    <p>{{ n.message }}</p>
+    <div class="form-grid">
+      <div><strong>Fecha:</strong> {{ n.date | date: 'medium' }}</div>
+      <div><strong>Leída:</strong> {{ n.isRead ? 'Sí' : 'No' }}</div>
+      <div><strong>Automática:</strong> {{ n.isAutomatic ? 'Sí' : 'No' }}</div>
+      <div *ngIf="clientRef(n.client) as c"><strong>Cliente:</strong> <a [routerLink]="['/clients', c._id]">{{ c.name }}</a></div>
+      <div *ngIf="recipientRef(n.recipientUser) as u"><strong>Usuario destinatario:</strong> {{ u.name }}</div>
+    </div>
+  </div>
+
+  <div class="card" style="max-width: 640px; margin-top: 1.5rem;" *ngIf="isAdmin">
+    <h2>Editar notificación</h2>
+    <form [formGroup]="editForm" (ngSubmit)="saveEdits()" novalidate>
+      <div class="form-field">
+        <label for="message">Mensaje</label>
+        <textarea id="message" rows="3" formControlName="message" [class.invalid]="editForm.controls.message.invalid && editForm.controls.message.touched"></textarea>
+        <span class="field-error" *ngIf="editForm.controls.message.invalid && editForm.controls.message.touched">El mensaje es obligatorio.</span>
+      </div>
+      <div class="form-field" style="flex-direction: row; align-items: center; gap: 0.5rem;">
+        <input id="isRead" type="checkbox" formControlName="isRead" style="width: auto;" />
+        <label for="isRead" style="margin: 0;">Marcada como leída</label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">{{ saving() ? 'Guardando...' : 'Guardar cambios' }}</button>
+      </div>
+    </form>
+  </div>
+</ng-container>
+
+<app-confirm-dialog
+  *ngIf="confirmingDelete()"
+  title="Eliminar notificación"
+  message="¿Desea eliminar realmente esta notificación? Esta acción no se puede deshacer."
+  [busy]="deleting()"
+  (confirmed)="performDelete()"
+  (cancelled)="cancelDelete()"
+></app-confirm-dialog>

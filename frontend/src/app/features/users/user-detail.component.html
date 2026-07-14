@@ -1,0 +1,29 @@
+<div class="loading-state" *ngIf="loading()">Cargando usuario...</div>
+
+<ng-container *ngIf="user() as u">
+  <div class="page-header">
+    <div>
+      <h1>{{ u.name }}</h1>
+      <p>{{ u.email }}</p>
+    </div>
+    <div class="table-actions">
+      <a [routerLink]="['/users', u.id, 'edit']" class="btn btn-secondary">Editar</a>
+      <a routerLink="/users" class="btn btn-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card" style="max-width: 480px;">
+    <div class="form-field">
+      <label>Rol</label>
+      <div><app-status-badge [label]="userRoleMeta(u.role).label" [variant]="userRoleMeta(u.role).variant"></app-status-badge></div>
+    </div>
+    <div class="form-field">
+      <label>Estado</label>
+      <div><app-status-badge [label]="userStatusMeta(u.status).label" [variant]="userStatusMeta(u.status).variant"></app-status-badge></div>
+    </div>
+    <div class="form-field">
+      <label>Miembro desde</label>
+      <div>{{ u.createdAt | date: 'medium' }}</div>
+    </div>
+  </div>
+</ng-container>

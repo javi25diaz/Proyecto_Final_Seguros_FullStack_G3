@@ -1,0 +1,76 @@
+<div class="page-header">
+  <div>
+    <h1>{{ isEditMode() ? 'Editar cliente' : 'Nuevo cliente' }}</h1>
+    <p>Complete los datos del cliente</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 720px;">
+  <div class="loading-state" *ngIf="loading()">Cargando...</div>
+  <div class="auth-error" *ngIf="errorMessage()" style="background: var(--color-danger-bg); color: var(--color-danger); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+    {{ errorMessage() }}
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate *ngIf="!loading()">
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="name">Nombre completo</label>
+        <input id="name" type="text" formControlName="name" [class.invalid]="form.controls.name.invalid && form.controls.name.touched" />
+        <span class="field-error" *ngIf="form.controls.name.invalid && form.controls.name.touched">El nombre debe tener entre 2 y 150 caracteres.</span>
+      </div>
+
+      <div class="form-field">
+        <label for="identification">Identificación</label>
+        <input id="identification" type="text" formControlName="identification" [class.invalid]="form.controls.identification.invalid && form.controls.identification.touched" />
+        <span class="field-error" *ngIf="form.controls.identification.invalid && form.controls.identification.touched">La identificación es obligatoria.</span>
+      </div>
+
+      <div class="form-field">
+        <label for="phone">Teléfono</label>
+        <input id="phone" type="text" formControlName="phone" [class.invalid]="form.controls.phone.invalid && form.controls.phone.touched" />
+        <span class="field-error" *ngIf="form.controls.phone.invalid && form.controls.phone.touched">El teléfono es obligatorio.</span>
+      </div>
+
+      <div class="form-field">
+        <label for="email">Correo electrónico</label>
+        <input id="email" type="email" formControlName="email" [class.invalid]="form.controls.email.invalid && form.controls.email.touched" />
+        <span class="field-error" *ngIf="form.controls.email.invalid && form.controls.email.touched">Ingrese un correo válido.</span>
+      </div>
+
+      <div class="form-field">
+        <label for="status">Estado</label>
+        <select id="status" formControlName="status">
+          <option value="active">Activo</option>
+          <option value="inactive">Inactivo</option>
+        </select>
+      </div>
+
+      <div class="form-field" *ngIf="isAdmin">
+        <label for="assignedAgent">Agente responsable</label>
+        <select id="assignedAgent" formControlName="assignedAgent" [class.invalid]="form.controls.assignedAgent.invalid && form.controls.assignedAgent.touched">
+          <option value="">Seleccione un agente</option>
+          <option *ngFor="let agent of agents()" [value]="agent.id">{{ agent.name }} ({{ agent.email }})</option>
+        </select>
+        <span class="field-error" *ngIf="form.controls.assignedAgent.invalid && form.controls.assignedAgent.touched">Debe seleccionar un agente responsable.</span>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label for="address">Dirección</label>
+      <input id="address" type="text" formControlName="address" [class.invalid]="form.controls.address.invalid && form.controls.address.touched" />
+      <span class="field-error" *ngIf="form.controls.address.invalid && form.controls.address.touched">La dirección es obligatoria.</span>
+    </div>
+
+    <div class="form-field">
+      <label for="notes">Notas</label>
+      <textarea id="notes" rows="3" formControlName="notes"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+        {{ submitting() ? 'Guardando...' : 'Guardar' }}
+      </button>
+      <a routerLink="/clients" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>

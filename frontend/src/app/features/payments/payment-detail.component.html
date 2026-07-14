@@ -1,0 +1,33 @@
+<div class="loading-state" *ngIf="loading()">Cargando pago...</div>
+
+<ng-container *ngIf="payment() as p">
+  <div class="page-header">
+    <div>
+      <h1>{{ p.receiptNumber }}</h1>
+      <p>Detalle del pago</p>
+    </div>
+    <div class="table-actions">
+      <a [routerLink]="['/payments', p._id, 'edit']" class="btn btn-secondary">Editar</a>
+      <a routerLink="/payments" class="btn btn-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="form-grid">
+      <div>
+        <strong>Cliente:</strong>
+        <span *ngIf="clientRef(p.client) as c"> <a [routerLink]="['/clients', c._id]">{{ c.name }}</a></span>
+      </div>
+      <div>
+        <strong>Póliza:</strong>
+        <span *ngIf="policyRef(p.policy) as pol"> <a [routerLink]="['/policies', pol._id]">{{ pol.policyNumber }}</a></span>
+      </div>
+      <div><strong>Monto:</strong> B/. {{ p.amount | number: '1.2-2' }}</div>
+      <div><strong>Fecha:</strong> {{ p.paymentDate | date: 'shortDate' }}</div>
+      <div><strong>Método:</strong> {{ paymentMethodLabels[p.method] }}</div>
+      <div><strong>Estado:</strong> <app-status-badge [label]="paymentStatusMeta(p.status).label" [variant]="paymentStatusMeta(p.status).variant"></app-status-badge></div>
+      <div *ngIf="p.reference"><strong>Referencia:</strong> {{ p.reference }}</div>
+    </div>
+    <p *ngIf="p.notes" class="text-muted">{{ p.notes }}</p>
+  </div>
+</ng-container>

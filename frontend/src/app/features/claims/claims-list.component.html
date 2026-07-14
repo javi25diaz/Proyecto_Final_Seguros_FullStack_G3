@@ -1,0 +1,76 @@
+<div class="page-header">
+  <div>
+    <h1>Reclamaciones</h1>
+    <p>Seguimiento de reclamaciones de clientes</p>
+  </div>
+  <a routerLink="/claims/new" class="btn btn-primary">Nueva reclamación</a>
+</div>
+
+<div class="toolbar">
+  <input
+    type="search"
+    placeholder="Buscar por número o descripción"
+    [value]="search()"
+    (input)="onSearchChange($any($event.target).value)"
+    aria-label="Buscar reclamaciones"
+  />
+  <select [value]="statusFilter()" (change)="onStatusFilterChange($any($event.target).value)" aria-label="Filtrar por estado">
+    <option value="">Todos los estados</option>
+    <option value="received">Recibida</option>
+    <option value="under_analysis">En análisis</option>
+    <option value="approved">Aprobada</option>
+    <option value="rejected">Rechazada</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="loading-state" *ngIf="loading()">Cargando reclamaciones...</div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="empty-state" *ngIf="claims().length === 0">No se encontraron reclamaciones con los criterios seleccionados.</div>
+
+    <div class="table-wrapper" *ngIf="claims().length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Cliente</th>
+            <th>Póliza</th>
+            <th>Monto solicitado</th>
+            <th>Monto aprobado</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let claim of claims()">
+            <td>{{ claim.claimNumber }}</td>
+            <td>{{ clientName(claim.client) }}</td>
+            <td>{{ policyNumber(claim.policy) }}</td>
+            <td>B/. {{ claim.amountRequested | number: '1.2-2' }}</td>
+            <td>{{ claim.amountApproved !== undefined && claim.amountApproved !== null ? ('B/. ' + (claim.amountApproved | number: '1.2-2')) : '—' }}</td>
+            <td><app-status-badge [label]="claimStatusMeta(claim.status).label" [variant]="claimStatusMeta(claim.status).variant"></app-status-badge></td>
+            <td>
+              <div class="table-actions">
+                <a [routerLink]="['/claims', claim._id]" class="btn btn-secondary btn-sm">Ver</a>
+                <a [routerLink]="['/claims', claim._id, 'edit']" class="btn btn-secondary btn-sm">Editar</a>
+                <button type="button" class="btn btn-danger btn-sm" (click)="confirmDelete(claim)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [meta]="meta()" (pageChange)="onPageChange($event)"></app-pagination>
+  </ng-container>
+</div>
+
+<app-confirm-dialog
+  *ngIf="pendingDelete() as claim"
+  title="Eliminar reclamación"
+  [message]="'¿Desea eliminar realmente la reclamación ' + claim.claimNumber + '? Esta acción no se puede deshacer.'"
+  [busy]="deleting()"
+  (confirmed)="performDelete()"
+  (cancelled)="cancelDelete()"
+></app-confirm-dialog>

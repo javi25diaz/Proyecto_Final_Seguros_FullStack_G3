@@ -1,0 +1,122 @@
+<div class="loading-state" *ngIf="loading()">Cargando historial del cliente...</div>
+
+<ng-container *ngIf="history() as h">
+  <div class="page-header">
+    <div>
+      <h1>{{ h.client.name }}</h1>
+      <p>Identificación: {{ h.client.identification }}</p>
+    </div>
+    <div class="table-actions">
+      <a [routerLink]="['/clients', h.client._id, 'edit']" class="btn btn-secondary">Editar</a>
+      <a routerLink="/clients" class="btn btn-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <div class="form-grid">
+      <div><strong>Teléfono:</strong> {{ h.client.phone }}</div>
+      <div><strong>Correo:</strong> {{ h.client.email }}</div>
+      <div><strong>Dirección:</strong> {{ h.client.address }}</div>
+      <div><strong>Estado:</strong> <app-status-badge [label]="clientStatusMeta(h.client.status).label" [variant]="clientStatusMeta(h.client.status).variant"></app-status-badge></div>
+    </div>
+    <p *ngIf="h.client.notes" class="text-muted">{{ h.client.notes }}</p>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-value">{{ h.totals.policies }}</div><div class="kpi-label">Pólizas</div></div>
+    <div class="kpi-card"><div class="kpi-value">{{ h.totals.activePolicies }}</div><div class="kpi-label">Pólizas activas</div></div>
+    <div class="kpi-card"><div class="kpi-value">B/. {{ h.totals.totalPaid | number: '1.2-2' }}</div><div class="kpi-label">Total pagado</div></div>
+    <div class="kpi-card"><div class="kpi-value">{{ h.totals.openIncidents }}</div><div class="kpi-label">Siniestros abiertos</div></div>
+    <div class="kpi-card"><div class="kpi-value">{{ h.totals.pendingClaims }}</div><div class="kpi-label">Reclamaciones pendientes</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <h2>Pólizas</h2>
+    <div class="table-wrapper" *ngIf="h.policies.length; else noPolicies">
+      <table class="data-table">
+        <thead><tr><th>Número</th><th>Tipo</th><th>Prima</th><th>Vigencia</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of h.policies">
+            <td><a [routerLink]="['/policies', p._id]">{{ p.policyNumber }}</a></td>
+            <td>{{ insuranceTypeMeta(p.insuranceType).label }}</td>
+            <td>B/. {{ p.premium | number: '1.2-2' }}</td>
+            <td>{{ p.startDate | date: 'shortDate' }} – {{ p.endDate | date: 'shortDate' }}</td>
+            <td><app-status-badge [label]="policyStatusMeta(p.status).label" [variant]="policyStatusMeta(p.status).variant"></app-status-badge></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noPolicies><p class="text-muted">Sin pólizas registradas.</p></ng-template>
+  </div>
+
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <h2>Pagos</h2>
+    <div class="table-wrapper" *ngIf="h.payments.length; else noPayments">
+      <table class="data-table">
+        <thead><tr><th>Recibo</th><th>Monto</th><th>Fecha</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of h.payments">
+            <td><a [routerLink]="['/payments', p._id]">{{ p.receiptNumber }}</a></td>
+            <td>B/. {{ p.amount | number: '1.2-2' }}</td>
+            <td>{{ p.paymentDate | date: 'shortDate' }}</td>
+            <td><app-status-badge [label]="paymentStatusMeta(p.status).label" [variant]="paymentStatusMeta(p.status).variant"></app-status-badge></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noPayments><p class="text-muted">Sin pagos registrados.</p></ng-template>
+  </div>
+
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <h2>Siniestros</h2>
+    <div class="table-wrapper" *ngIf="h.incidents.length; else noIncidents">
+      <table class="data-table">
+        <thead><tr><th>Número</th><th>Descripción</th><th>Fecha</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let i of h.incidents">
+            <td><a [routerLink]="['/incidents', i._id]">{{ i.incidentNumber }}</a></td>
+            <td>{{ i.description }}</td>
+            <td>{{ i.eventDate | date: 'shortDate' }}</td>
+            <td><app-status-badge [label]="incidentStatusMeta(i.status).label" [variant]="incidentStatusMeta(i.status).variant"></app-status-badge></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noIncidents><p class="text-muted">Sin siniestros registrados.</p></ng-template>
+  </div>
+
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <h2>Reclamaciones</h2>
+    <div class="table-wrapper" *ngIf="h.claims.length; else noClaims">
+      <table class="data-table">
+        <thead><tr><th>Número</th><th>Monto solicitado</th><th>Monto aprobado</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let c of h.claims">
+            <td><a [routerLink]="['/claims', c._id]">{{ c.claimNumber }}</a></td>
+            <td>B/. {{ c.amountRequested | number: '1.2-2' }}</td>
+            <td>{{ c.amountApproved !== undefined && c.amountApproved !== null ? ('B/. ' + (c.amountApproved | number: '1.2-2')) : '—' }}</td>
+            <td><app-status-badge [label]="claimStatusMeta(c.status).label" [variant]="claimStatusMeta(c.status).variant"></app-status-badge></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noClaims><p class="text-muted">Sin reclamaciones registradas.</p></ng-template>
+  </div>
+
+  <div class="card">
+    <h2>Notificaciones</h2>
+    <div class="table-wrapper" *ngIf="h.notifications.length; else noNotifications">
+      <table class="data-table">
+        <thead><tr><th>Mensaje</th><th>Fecha</th><th>Leída</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let n of h.notifications">
+            <td>{{ n.message }}</td>
+            <td>{{ n.date | date: 'short' }}</td>
+            <td>{{ n.isRead ? 'Sí' : 'No' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noNotifications><p class="text-muted">Sin notificaciones registradas.</p></ng-template>
+  </div>
+</ng-container>

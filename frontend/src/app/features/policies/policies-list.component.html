@@ -1,0 +1,85 @@
+<div class="page-header">
+  <div>
+    <h1>Pólizas</h1>
+    <p>Administración de pólizas de seguro</p>
+  </div>
+  <a routerLink="/policies/new" class="btn btn-primary">Nueva póliza</a>
+</div>
+
+<div class="toolbar">
+  <input
+    type="search"
+    placeholder="Buscar por número o cobertura"
+    [value]="search()"
+    (input)="onSearchChange($any($event.target).value)"
+    aria-label="Buscar pólizas"
+  />
+  <select [value]="statusFilter()" (change)="onStatusFilterChange($any($event.target).value)" aria-label="Filtrar por estado">
+    <option value="">Todos los estados</option>
+    <option value="draft">Borrador</option>
+    <option value="active">Activa</option>
+    <option value="expired">Vencida</option>
+    <option value="cancelled">Cancelada</option>
+  </select>
+  <select [value]="typeFilter()" (change)="onTypeFilterChange($any($event.target).value)" aria-label="Filtrar por tipo">
+    <option value="">Todos los tipos</option>
+    <option value="auto">Automóvil</option>
+    <option value="home">Hogar</option>
+    <option value="life">Vida</option>
+    <option value="health">Salud</option>
+    <option value="travel">Viaje</option>
+    <option value="other">Otro</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="loading-state" *ngIf="loading()">Cargando pólizas...</div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="empty-state" *ngIf="policies().length === 0">No se encontraron pólizas con los criterios seleccionados.</div>
+
+    <div class="table-wrapper" *ngIf="policies().length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Prima</th>
+            <th>Vigencia</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let policy of policies()">
+            <td>{{ policy.policyNumber }}</td>
+            <td>{{ clientName(policy.client) }}</td>
+            <td>{{ insuranceTypeMeta(policy.insuranceType).label }}</td>
+            <td>B/. {{ policy.premium | number: '1.2-2' }}</td>
+            <td>{{ policy.startDate | date: 'shortDate' }} – {{ policy.endDate | date: 'shortDate' }}</td>
+            <td><app-status-badge [label]="policyStatusMeta(policy.status).label" [variant]="policyStatusMeta(policy.status).variant"></app-status-badge></td>
+            <td>
+              <div class="table-actions">
+                <a [routerLink]="['/policies', policy._id]" class="btn btn-secondary btn-sm">Ver</a>
+                <a [routerLink]="['/policies', policy._id, 'edit']" class="btn btn-secondary btn-sm">Editar</a>
+                <button type="button" class="btn btn-danger btn-sm" (click)="confirmDelete(policy)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [meta]="meta()" (pageChange)="onPageChange($event)"></app-pagination>
+  </ng-container>
+</div>
+
+<app-confirm-dialog
+  *ngIf="pendingDelete() as policy"
+  title="Eliminar póliza"
+  [message]="'¿Desea eliminar realmente la póliza ' + policy.policyNumber + '? Esta acción no se puede deshacer.'"
+  [busy]="deleting()"
+  (confirmed)="performDelete()"
+  (cancelled)="cancelDelete()"
+></app-confirm-dialog>

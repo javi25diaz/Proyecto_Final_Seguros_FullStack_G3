@@ -1,0 +1,122 @@
+<div class="page-header">
+  <div>
+    <h1>Notificaciones</h1>
+    <p>{{ isAdmin ? 'Todas las notificaciones del sistema' : 'Notificaciones relacionadas con su operación' }}</p>
+  </div>
+  <button *ngIf="isAdmin" type="button" class="btn btn-primary" (click)="toggleCreateForm()">
+    {{ showCreateForm() ? 'Cancelar' : 'Nueva notificación' }}
+  </button>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;" *ngIf="isAdmin && showCreateForm()">
+  <h2>Nueva notificación manual</h2>
+  <div *ngIf="createError()" style="background: var(--color-danger-bg); color: var(--color-danger); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+    {{ createError() }}
+  </div>
+  <form [formGroup]="createForm" (ngSubmit)="submitCreate()" novalidate>
+    <div class="form-field">
+      <label for="message">Mensaje</label>
+      <textarea id="message" rows="2" formControlName="message" [class.invalid]="createForm.controls.message.invalid && createForm.controls.message.touched"></textarea>
+      <span class="field-error" *ngIf="createForm.controls.message.invalid && createForm.controls.message.touched">El mensaje es obligatorio.</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="type">Tipo</label>
+        <select id="type" formControlName="type">
+          <option value="policy">Póliza</option>
+          <option value="payment">Pago</option>
+          <option value="incident">Siniestro</option>
+          <option value="claim">Reclamación</option>
+          <option value="system">Sistema</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="recipientUser">Usuario destinatario</label>
+        <select id="recipientUser" formControlName="recipientUser">
+          <option value="">Ninguno</option>
+          <option *ngFor="let agent of agents()" [value]="agent.id">{{ agent.name }}</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="client">Cliente destinatario</label>
+        <select id="client" formControlName="client">
+          <option value="">Ninguno</option>
+          <option *ngFor="let client of clients()" [value]="client._id">{{ client.name }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="creating()">{{ creating() ? 'Creando...' : 'Crear notificación' }}</button>
+    </div>
+  </form>
+</div>
+
+<div class="toolbar">
+  <input
+    type="search"
+    placeholder="Buscar en el mensaje"
+    [value]="search()"
+    (input)="onSearchChange($any($event.target).value)"
+    aria-label="Buscar notificaciones"
+  />
+  <select [value]="typeFilter()" (change)="onTypeFilterChange($any($event.target).value)" aria-label="Filtrar por tipo">
+    <option value="">Todos los tipos</option>
+    <option value="policy">Póliza</option>
+    <option value="payment">Pago</option>
+    <option value="incident">Siniestro</option>
+    <option value="claim">Reclamación</option>
+    <option value="system">Sistema</option>
+  </select>
+  <select [value]="readFilter()" (change)="onReadFilterChange($any($event.target).value)" aria-label="Filtrar por lectura">
+    <option value="">Leídas y no leídas</option>
+    <option value="false">No leídas</option>
+    <option value="true">Leídas</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="loading-state" *ngIf="loading()">Cargando notificaciones...</div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="empty-state" *ngIf="notifications().length === 0">No se encontraron notificaciones con los criterios seleccionados.</div>
+
+    <div class="table-wrapper" *ngIf="notifications().length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mensaje</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Leída</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let n of notifications()" [style.opacity]="n.isRead ? 0.7 : 1">
+            <td><a [routerLink]="['/notifications', n._id]">{{ n.message }}</a></td>
+            <td><app-status-badge [label]="notificationTypeMeta(n.type).label" [variant]="notificationTypeMeta(n.type).variant"></app-status-badge></td>
+            <td>{{ n.date | date: 'short' }}</td>
+            <td>{{ n.isRead ? 'Sí' : 'No' }}</td>
+            <td>
+              <div class="table-actions">
+                <button type="button" class="btn btn-secondary btn-sm" *ngIf="!n.isRead" (click)="markAsRead(n)">Marcar leída</button>
+                <button type="button" class="btn btn-danger btn-sm" (click)="confirmDelete(n)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [meta]="meta()" (pageChange)="onPageChange($event)"></app-pagination>
+  </ng-container>
+</div>
+
+<app-confirm-dialog
+  *ngIf="pendingDelete() as notification"
+  title="Eliminar notificación"
+  message="¿Desea eliminar realmente esta notificación? Esta acción no se puede deshacer."
+  [busy]="deleting()"
+  (confirmed)="performDelete()"
+  (cancelled)="cancelDelete()"
+></app-confirm-dialog>

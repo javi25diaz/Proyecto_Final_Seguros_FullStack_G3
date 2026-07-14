@@ -1,0 +1,31 @@
+<div class="loading-state" *ngIf="loading()">Cargando siniestro...</div>
+
+<ng-container *ngIf="incident() as i">
+  <div class="page-header">
+    <div>
+      <h1>{{ i.incidentNumber }}</h1>
+      <p>Detalle del siniestro</p>
+    </div>
+    <div class="table-actions">
+      <a [routerLink]="['/incidents', i._id, 'edit']" class="btn btn-secondary">Editar</a>
+      <a routerLink="/incidents" class="btn btn-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="form-grid">
+      <div>
+        <strong>Cliente:</strong>
+        <span *ngIf="clientRef(i.client) as c"> <a [routerLink]="['/clients', c._id]">{{ c.name }}</a></span>
+      </div>
+      <div>
+        <strong>Póliza:</strong>
+        <span *ngIf="policyRef(i.policy) as pol"> <a [routerLink]="['/policies', pol._id]">{{ pol.policyNumber }}</a></span>
+      </div>
+      <div><strong>Fecha del evento:</strong> {{ i.eventDate | date: 'shortDate' }}</div>
+      <div><strong>Estado:</strong> <app-status-badge [label]="incidentStatusMeta(i.status).label" [variant]="incidentStatusMeta(i.status).variant"></app-status-badge></div>
+      <div *ngIf="i.evidenceUrl"><strong>Evidencia:</strong> <a [href]="i.evidenceUrl" target="_blank" rel="noopener">Ver documento</a></div>
+    </div>
+    <p class="text-muted">{{ i.description }}</p>
+  </div>
+</ng-container>
