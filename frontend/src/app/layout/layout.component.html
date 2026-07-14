@@ -1,0 +1,41 @@
+<app-toast-container></app-toast-container>
+
+<div class="shell" [class.sidebar-open]="sidebarOpen()">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">IT</span>
+      <span class="brand-name">InsureTech CRM</span>
+    </div>
+    <nav aria-label="Navegación principal">
+      <a
+        *ngFor="let item of visibleMenuItems"
+        [routerLink]="item.path"
+        routerLinkActive="active"
+        (click)="closeSidebar()"
+        class="nav-link"
+      >
+        {{ item.label }}
+      </a>
+    </nav>
+  </aside>
+
+  <div class="sidebar-scrim" (click)="closeSidebar()"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button type="button" class="btn-menu" (click)="toggleSidebar()" aria-label="Abrir menú de navegación">
+        ☰
+      </button>
+      <div class="topbar-spacer"></div>
+      <div class="user-info" *ngIf="auth.currentUser() as user">
+        <span class="user-name">{{ user.name }}</span>
+        <span class="badge badge-info">{{ user.role }}</span>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="logout()">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

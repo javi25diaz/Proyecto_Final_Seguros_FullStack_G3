@@ -1,0 +1,29 @@
+<div class="page-header">
+  <div>
+    <h1>Mi perfil</h1>
+    <p>Información de su cuenta</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 480px;" *ngIf="auth.currentUser() as user">
+  <div class="form-field">
+    <label>Nombre</label>
+    <div>{{ user.name }}</div>
+  </div>
+  <div class="form-field">
+    <label>Correo electrónico</label>
+    <div>{{ user.email }}</div>
+  </div>
+  <div class="form-field">
+    <label>Rol</label>
+    <div><app-status-badge [label]="userRoleMeta(user.role).label" [variant]="userRoleMeta(user.role).variant"></app-status-badge></div>
+  </div>
+  <div class="form-field">
+    <label>Estado</label>
+    <div><app-status-badge [label]="userStatusMeta(user.status).label" [variant]="userStatusMeta(user.status).variant"></app-status-badge></div>
+  </div>
+  <div class="form-field">
+    <label>Miembro desde</label>
+    <div>{{ user.createdAt | date: 'medium' }}</div>
+  </div>
+</div>

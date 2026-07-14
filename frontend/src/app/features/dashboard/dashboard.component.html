@@ -1,0 +1,139 @@
+<div class="page-header">
+  <div>
+    <h1>Dashboard</h1>
+    <p>Bienvenido, {{ auth.currentUser()?.name }}</p>
+  </div>
+</div>
+
+<!-- Guest view -->
+<div class="card" *ngIf="auth.role() === 'guest'">
+  <h2>Su cuenta está en revisión</h2>
+  <p class="text-muted">
+    Actualmente posee el rol <strong>invitado</strong>, el cual solo permite consultar su perfil.
+    Un administrador debe autorizar su cuenta asignándole el rol de agente para acceder a los
+    módulos operativos del CRM (clientes, pólizas, pagos, siniestros, reclamaciones y notificaciones).
+  </p>
+  <a routerLink="/profile" class="btn btn-secondary">Ver mi perfil</a>
+</div>
+
+<!-- Loading -->
+<div class="loading-state" *ngIf="loading()">Cargando información del dashboard...</div>
+
+<!-- Admin / Agent view -->
+<ng-container *ngIf="summary() as data">
+  <ng-container *ngIf="asAdmin(data) as admin">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-value">{{ admin.totalUsers }}</div><div class="kpi-label">Total usuarios</div></div>
+      <div class="kpi-card"><div class="kpi-value">{{ admin.activeUsers }}</div><div class="kpi-label">Usuarios activos</div></div>
+      <div class="kpi-card"><div class="kpi-value">{{ admin.totalClients }}</div><div class="kpi-label">Total clientes</div></div>
+      <div class="kpi-card"><div class="kpi-value">{{ admin.activePolicies }}</div><div class="kpi-label">Pólizas activas</div></div>
+      <div class="kpi-card"><div class="kpi-value">{{ admin.pendingClaims }}</div><div class="kpi-label">Reclamaciones pendientes</div></div>
+      <div class="kpi-card"><div class="kpi-value">{{ admin.openIncidents }}</div><div class="kpi-label">Siniestros abiertos</div></div>
+      <div class="kpi-card"><div class="kpi-value">B/. {{ admin.totalPaidThisMonth | number: '1.2-2' }}</div><div class="kpi-label">Pagado este mes</div></div>
+      <div class="kpi-card"><div class="kpi-value">{{ admin.unreadNotifications }}</div><div class="kpi-label">Notificaciones no leídas</div></div>
+    </div>
+
+    <div class="form-grid">
+      <div class="card">
+        <h2>Últimos clientes</h2>
+        <div class="table-wrapper" *ngIf="admin.recentClients.length; else noClients">
+          <table class="data-table">
+            <thead><tr><th>Nombre</th><th>Identificación</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let c of admin.recentClients">
+                <td>{{ c.name }}</td>
+                <td>{{ c.identification }}</td>
+                <td><app-status-badge [label]="clientStatusMeta(c.status).label" [variant]="clientStatusMeta(c.status).variant"></app-status-badge></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noClients><p class="text-muted">Aún no hay clientes registrados.</p></ng-template>
+      </div>
+
+      <div class="card">
+        <h2>Últimas reclamaciones</h2>
+        <div class="table-wrapper" *ngIf="admin.recentClaims.length; else noClaims">
+          <table class="data-table">
+            <thead><tr><th>Número</th><th>Cliente</th><th>Estado</th><th>Monto</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let c of admin.recentClaims">
+                <td>{{ c.claimNumber }}</td>
+                <td>{{ c.client?.name }}</td>
+                <td><app-status-badge [label]="claimStatusMeta(c.status).label" [variant]="claimStatusMeta(c.status).variant"></app-status-badge></td>
+                <td>B/. {{ c.amountRequested | number: '1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noClaims><p class="text-muted">Aún no hay reclamaciones registradas.</p></ng-template>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+      <h2>Actividad reciente</h2>
+      <div class="table-wrapper" *ngIf="recentActivity().length; else noActivity">
+        <table class="data-table">
+          <thead><tr><th>Tipo</th><th>Referencia</th><th>Cliente</th><th>Estado</th><th>Fecha</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let item of recentActivity()">
+              <td>{{ entityTypeLabel(item.entityType) }}</td>
+              <td>{{ item.label }}</td>
+              <td>{{ item.client }}</td>
+              <td>
+                <app-status-badge [label]="activityStatusMeta(item).label" [variant]="activityStatusMeta(item).variant"></app-status-badge>
+              </td>
+              <td>{{ item.date | date: 'short' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noActivity><p class="text-muted">Sin actividad reciente.</p></ng-template>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="asAgent(data) as agent">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-value">{{ agent.myClients }}</div><div class="kpi-label">Mis clientes</div></div>
+      <div class="kpi-card"><div class="kpi-value">{{ agent.myPolicies }}</div><div class="kpi-label">Mis pólizas</div></div>
+      <div class="kpi-card"><div class="kpi-value">{{ agent.claimsUnderAnalysis }}</div><div class="kpi-label">Reclamaciones en análisis</div></div>
+      <div class="kpi-card"><div class="kpi-value">{{ agent.openIncidents }}</div><div class="kpi-label">Siniestros abiertos</div></div>
+    </div>
+
+    <div class="form-grid">
+      <div class="card">
+        <h2>Pagos recientes</h2>
+        <div class="table-wrapper" *ngIf="agent.recentPayments.length; else noPayments">
+          <table class="data-table">
+            <thead><tr><th>Recibo</th><th>Cliente</th><th>Monto</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let p of agent.recentPayments">
+                <td>{{ p.receiptNumber }}</td>
+                <td>{{ p.client?.name }}</td>
+                <td>B/. {{ p.amount | number: '1.2-2' }}</td>
+                <td><app-status-badge [label]="paymentStatusMeta(p.status).label" [variant]="paymentStatusMeta(p.status).variant"></app-status-badge></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noPayments><p class="text-muted">Sin pagos recientes.</p></ng-template>
+      </div>
+
+      <div class="card">
+        <h2>Notificaciones</h2>
+        <div class="table-wrapper" *ngIf="agent.myNotifications.length; else noNotifications">
+          <table class="data-table">
+            <thead><tr><th>Mensaje</th><th>Fecha</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let n of agent.myNotifications">
+                <td>{{ n.message }}</td>
+                <td>{{ n.date | date: 'short' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noNotifications><p class="text-muted">Sin notificaciones recientes.</p></ng-template>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>
