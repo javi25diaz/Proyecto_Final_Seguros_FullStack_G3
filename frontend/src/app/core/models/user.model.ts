@@ -16,3 +16,46 @@ export interface AuthSession {
   expiresIn: string;
   user: User;
 }
+
+export interface UserDependencyCounts {
+  assignedClients: number;
+  assignedPolicies: number;
+  recipientNotifications: number;
+  createdClients: number;
+  createdPolicies: number;
+  createdNotifications: number;
+  handledClaims: number;
+  registeredPayments: number;
+  reportedIncidents: number;
+}
+
+export interface UserDependencyBreakdown {
+  reassignable: Pick<UserDependencyCounts, 'assignedClients' | 'assignedPolicies' | 'recipientNotifications'>;
+  blocking: Pick<
+    UserDependencyCounts,
+    'createdClients' | 'createdPolicies' | 'createdNotifications' | 'handledClaims' | 'registeredPayments' | 'reportedIncidents'
+  >;
+}
+
+export interface UserDependenciesSnapshot {
+  user: User;
+  dependencies: UserDependencyCounts;
+  breakdown: UserDependencyBreakdown;
+  reassignableCount: number;
+  blockingCount: number;
+  totalDependencies: number;
+  canDelete: boolean;
+}
+
+export interface UserReassignResponse {
+  sourceUser: User;
+  replacementUser: User;
+  updated: {
+    clients: number;
+    policies: number;
+    notifications: number;
+  };
+  totalUpdated: number;
+  remainingDependencies: UserDependenciesSnapshot;
+  canDeleteSourceUser: boolean;
+}
