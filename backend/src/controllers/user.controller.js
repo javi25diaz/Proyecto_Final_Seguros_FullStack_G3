@@ -3,6 +3,7 @@ const ApiError = require('../utils/ApiError');
 const ApiResponse = require('../utils/ApiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const { getPagination, getSort, escapeRegex } = require('../utils/pagination');
+const { getUserLifecycleDependencies, reassignUserResponsibilities } = require('../services/user.lifecycle.service');
 
 async function countAdmins(excludeId = null, { activeOnly = false } = {}) {
   const filter = { role: 'admin' };
@@ -112,9 +113,27 @@ const remove = asyncHandler(async (req, res) => {
     }
   }
 
+  const dependencies = await getUserLifecycleDependencies(user._id);
+  if (dependencies.totalDependencies > 0) {
+    throw ApiError.conflict(
+      'No se puede eliminar el usuario porque mantiene registros relacionados. Reasigne sus responsabilidades o desactive la cuenta.',
+      'USER_HAS_DEPENDENCIES'
+    );
+  }
+
   await user.deleteOne();
 
   ApiResponse.success(res, { message: 'Usuario eliminado correctamente' });
 });
 
-module.exports = { list, getById, create, update, remove };
+const getDependencies = asyncHandler(async (req, res) => {
+  const dependencies = await getUserLifecycleDependencies(req.params.id);
+  ApiResponse.success(res, { data: dependencies });
+});
+
+const reassignResponsibilities = asyncHandler(async (req, res) => {
+  const result = await reassignUserResponsibilities(req.params.id, req.body.replacementUserId);
+  ApiResponse.success(res, { message: 'Responsabilidades reasignadas correctamente', data: result });
+});
+
+module.exports = { list, getById, create, update, remove, getDependencies, reassignResponsibilities };
