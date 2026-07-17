@@ -54,7 +54,7 @@
               <div class="table-actions">
                 <a [routerLink]="['/users', user.id]" class="btn btn-secondary btn-sm">Ver</a>
                 <a [routerLink]="['/users', user.id, 'edit']" class="btn btn-secondary btn-sm">Editar</a>
-                <button type="button" class="btn btn-danger btn-sm" [disabled]="isSelf(user)" (click)="confirmDelete(user)">Eliminar</button>
+                <button type="button" class="btn btn-danger btn-sm" [disabled]="isSelf(user) || dependencyLoading() || deleting() || reassigning()" (click)="confirmDelete(user)">Eliminar</button>
               </div>
             </td>
           </tr>
@@ -74,3 +74,68 @@
   (confirmed)="performDelete()"
   (cancelled)="cancelDelete()"
 ></app-confirm-dialog>
+
+<div class="modal-backdrop" *ngIf="dependencyTarget() as user" (click)="cancelDependencyReview()">
+  <div class="modal-panel" role="dialog" aria-modal="true" [attr.aria-labelledby]="'user-dependencies-title'" (click)="$event.stopPropagation()" style="max-width: 760px; width: calc(100% - 2rem);">
+    <h3 id="user-dependencies-title">Dependencias del usuario</h3>
+    <p *ngIf="dependencyLoading()">Consultando dependencias...</p>
+    <p *ngIf="!dependencyLoading() && !dependencySnapshot() && dependencyError()" class="field-error" style="display: block;">{{ dependencyError() }}</p>
+
+    <ng-container *ngIf="!dependencyLoading() && dependencySnapshot() as snapshot">
+      <p>
+        <strong>{{ user.name }}</strong> mantiene registros relacionados que deben resolverse antes de eliminar la cuenta.
+      </p>
+
+      <div *ngIf="dependencyError()" class="field-error" style="margin-bottom: 1rem; display: block;">{{ dependencyError() }}</div>
+
+      <div class="form-grid" style="margin-bottom: 1rem;">
+        <div class="card" style="padding: 1rem; background: var(--color-surface-2);">
+          <strong>Reasignables</strong>
+          <div>Clientes asignados: {{ snapshot.breakdown.reassignable.assignedClients }}</div>
+          <div>Pólizas asignadas: {{ snapshot.breakdown.reassignable.assignedPolicies }}</div>
+          <div>Notificaciones asignadas: {{ snapshot.breakdown.reassignable.recipientNotifications }}</div>
+          <div style="margin-top: 0.5rem;">Total: {{ snapshot.reassignableCount }}</div>
+        </div>
+
+        <div class="card" style="padding: 1rem; background: var(--color-surface-2);">
+          <strong>Históricas / bloqueantes</strong>
+          <div>Clientes creados: {{ snapshot.breakdown.blocking.createdClients }}</div>
+          <div>Pólizas creadas: {{ snapshot.breakdown.blocking.createdPolicies }}</div>
+          <div>Notificaciones creadas: {{ snapshot.breakdown.blocking.createdNotifications }}</div>
+          <div>Reclamaciones gestionadas: {{ snapshot.breakdown.blocking.handledClaims }}</div>
+          <div>Pagos registrados: {{ snapshot.breakdown.blocking.registeredPayments }}</div>
+          <div>Siniestros reportados: {{ snapshot.breakdown.blocking.reportedIncidents }}</div>
+          <div style="margin-top: 0.5rem;">Total: {{ snapshot.blockingCount }}</div>
+        </div>
+      </div>
+
+      <div class="card" style="padding: 1rem; margin-bottom: 1rem; background: var(--color-warning-bg);" *ngIf="snapshot.reassignableCount > 0">
+        <h4 style="margin-top: 0;">Reasignar responsabilidades</h4>
+        <p>Seleccione otro agente activo para transferir los clientes, pólizas y notificaciones operativas.</p>
+
+        <div class="form-field">
+          <label for="replacementUserId">Usuario reemplazo</label>
+          <select id="replacementUserId" [value]="selectedReplacementId()" (change)="onReplacementChange($any($event.target).value)" [disabled]="reassigning() || replacementUsers().length === 0">
+            <option value="">Seleccione un usuario activo</option>
+            <option *ngFor="let replacement of replacementUsers()" [value]="replacement.id">{{ replacement.name }} · {{ replacement.email }}</option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelDependencyReview()" [disabled]="reassigning()">Cerrar</button>
+          <button type="button" class="btn btn-primary" (click)="reassignResponsibilities()" [disabled]="reassigning() || !selectedReplacementId() || replacementUsers().length === 0">
+            {{ reassigning() ? 'Reasignando...' : 'Reasignar responsabilidades' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="card" style="padding: 1rem; background: var(--color-danger-bg); color: var(--color-danger);" *ngIf="snapshot.reassignableCount === 0">
+        No existen responsabilidades operativas transferibles. Este usuario solo puede mantenerse inactivo o conservarse por trazabilidad histórica.
+      </div>
+
+      <div class="form-actions" style="margin-top: 1rem;">
+        <button type="button" class="btn btn-secondary" (click)="cancelDependencyReview()" [disabled]="reassigning()">Cerrar</button>
+      </div>
+    </ng-container>
+  </div>
+</div>

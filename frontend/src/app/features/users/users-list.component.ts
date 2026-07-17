@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { UserService } from '../../core/services/user.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
-import { User } from '../../core/models/user.model';
+import { User, UserDependenciesSnapshot } from '../../core/models/user.model';
 import { PaginationMeta } from '../../core/models/api-response.model';
 import { PaginationComponent } from '../../shared/components/pagination.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
@@ -36,6 +36,13 @@ export class UsersListComponent implements OnInit {
 
   protected readonly pendingDelete = signal<User | null>(null);
   protected readonly deleting = signal(false);
+  protected readonly dependencyTarget = signal<User | null>(null);
+  protected readonly dependencySnapshot = signal<UserDependenciesSnapshot | null>(null);
+  protected readonly replacementUsers = signal<User[]>([]);
+  protected readonly selectedReplacementId = signal('');
+  protected readonly dependencyLoading = signal(false);
+  protected readonly reassigning = signal(false);
+  protected readonly dependencyError = signal<string | null>(null);
 
   ngOnInit(): void {
     this.load();
@@ -86,11 +93,91 @@ export class UsersListComponent implements OnInit {
   }
 
   confirmDelete(user: User): void {
-    this.pendingDelete.set(user);
+    if (this.dependencyLoading() || this.deleting() || this.reassigning()) return;
+
+    this.dependencyTarget.set(user);
+    this.dependencySnapshot.set(null);
+    this.replacementUsers.set([]);
+    this.selectedReplacementId.set('');
+    this.dependencyError.set(null);
+    this.dependencyLoading.set(true);
+
+    this.userService.getDependencies(user.id).subscribe({
+      next: (res) => {
+        this.dependencyLoading.set(false);
+        this.dependencySnapshot.set(res.data);
+
+        if (res.data.canDelete) {
+          this.dependencyTarget.set(null);
+          this.pendingDelete.set(user);
+          return;
+        }
+
+        if (res.data.reassignableCount > 0) {
+          this.userService.listActiveAgents(user.id).subscribe({
+            next: (agents) => this.replacementUsers.set(agents),
+            error: (err) => {
+              this.dependencyError.set(extractErrorMessage(err, 'No se pudieron cargar los usuarios de reemplazo'));
+              this.replacementUsers.set([]);
+            }
+          });
+        }
+      },
+      error: (err) => {
+        this.dependencyLoading.set(false);
+        this.dependencyError.set(extractErrorMessage(err, 'No se pudieron consultar las dependencias del usuario'));
+      }
+    });
   }
 
   cancelDelete(): void {
     this.pendingDelete.set(null);
+  }
+
+  cancelDependencyReview(): void {
+    this.dependencyTarget.set(null);
+    this.dependencySnapshot.set(null);
+    this.replacementUsers.set([]);
+    this.selectedReplacementId.set('');
+    this.dependencyLoading.set(false);
+    this.reassigning.set(false);
+    this.dependencyError.set(null);
+  }
+
+  onReplacementChange(value: string): void {
+    this.selectedReplacementId.set(value);
+  }
+
+  reassignResponsibilities(): void {
+    const user = this.dependencyTarget();
+    const replacementUserId = this.selectedReplacementId();
+    if (!user || !replacementUserId || this.reassigning()) return;
+
+    this.reassigning.set(true);
+    this.dependencyError.set(null);
+
+    this.userService.reassignResponsibilities(user.id, replacementUserId).subscribe({
+      next: (res) => {
+        this.reassigning.set(false);
+        this.dependencySnapshot.set(res.data.remainingDependencies);
+        this.toast.success('Responsabilidades reasignadas correctamente');
+
+        if (res.data.canDeleteSourceUser) {
+          this.cancelDependencyReview();
+          this.pendingDelete.set(user);
+          return;
+        }
+
+        this.userService.listActiveAgents(user.id).subscribe({
+          next: (agents) => this.replacementUsers.set(agents),
+          error: (err) => this.dependencyError.set(extractErrorMessage(err, 'No se pudieron cargar los usuarios de reemplazo'))
+        });
+      },
+      error: (err) => {
+        this.reassigning.set(false);
+        this.dependencyError.set(extractErrorMessage(err, 'No se pudieron reasignar las responsabilidades'));
+      }
+    });
   }
 
   performDelete(): void {

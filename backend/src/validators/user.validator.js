@@ -25,4 +25,8 @@ const updateUserValidator = [
 
 const idParamValidator = [param('id').isMongoId().withMessage('Identificador inválido')];
 
-module.exports = { createUserValidator, updateUserValidator, idParamValidator };
+const reassignUserValidator = [
+  body('replacementUserId').isMongoId().withMessage('Identificador inválido')
+];
+
+module.exports = { createUserValidator, updateUserValidator, idParamValidator, reassignUserValidator };
