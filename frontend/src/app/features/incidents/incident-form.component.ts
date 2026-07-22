@@ -6,6 +6,7 @@ import { IncidentService } from '../../core/services/incident.service';
 import { PolicyService } from '../../core/services/policy.service';
 import { ToastService } from '../../core/services/toast.service';
 import { extractErrorMessage } from '../../shared/utils/http-error.util';
+import { notFutureDateValidator } from '../../shared/validators/not-future-date.validator';
 import { Policy } from '../../core/models/policy.model';
 
 @Component({
@@ -32,10 +33,20 @@ export class IncidentFormComponent implements OnInit {
   protected readonly form = this.fb.nonNullable.group({
     policy: ['', [Validators.required]],
     description: ['', [Validators.required]],
-    eventDate: ['', [Validators.required]],
+    eventDate: ['', [Validators.required, notFutureDateValidator()]],
     evidenceUrl: [''],
     status: ['reported', [Validators.required]]
   });
+
+  protected readonly maxEventDate = this.getTodayIsoDate();
+
+  private getTodayIsoDate(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
   ngOnInit(): void {
     this.policyService.listAll().subscribe((policies) => this.policies.set(policies));

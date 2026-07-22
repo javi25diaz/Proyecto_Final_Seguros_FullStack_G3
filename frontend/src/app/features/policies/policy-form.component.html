@@ -52,14 +52,21 @@
 
       <div class="form-field">
         <label for="startDate">Fecha de inicio</label>
-        <input id="startDate" type="date" formControlName="startDate" [class.invalid]="form.controls.startDate.invalid && form.controls.startDate.touched" />
-        <span class="field-error" *ngIf="form.controls.startDate.invalid && form.controls.startDate.touched">La fecha de inicio es obligatoria.</span>
+        <input id="startDate" type="date" formControlName="startDate"
+          [class.invalid]="form.controls.startDate.invalid && form.controls.startDate.touched"
+          [attr.aria-invalid]="form.controls.startDate.invalid && form.controls.startDate.touched ? true : null"
+          [attr.aria-describedby]="form.controls.startDate.invalid && form.controls.startDate.touched ? 'startDate-error' : null" />
+        <span id="startDate-error" class="field-error" role="alert" *ngIf="form.controls.startDate.invalid && form.controls.startDate.touched">La fecha de inicio es obligatoria.</span>
       </div>
 
       <div class="form-field">
         <label for="endDate">Fecha final</label>
-        <input id="endDate" type="date" formControlName="endDate" [class.invalid]="form.controls.endDate.invalid && form.controls.endDate.touched" />
-        <span class="field-error" *ngIf="form.controls.endDate.invalid && form.controls.endDate.touched">La fecha final es obligatoria.</span>
+        <input id="endDate" type="date" formControlName="endDate"
+          [class.invalid]="(form.controls.endDate.invalid && form.controls.endDate.touched) || (form.errors?.['dateRange'] && (form.controls.startDate.touched || form.controls.endDate.touched))"
+          [attr.aria-invalid]="(form.controls.endDate.invalid && form.controls.endDate.touched) || (form.errors?.['dateRange'] && (form.controls.startDate.touched || form.controls.endDate.touched)) ? true : null"
+          [attr.aria-describedby]="form.controls.endDate.invalid && form.controls.endDate.touched ? 'endDate-error' : (form.errors?.['dateRange'] && (form.controls.startDate.touched || form.controls.endDate.touched) ? 'dateRange-error' : null)" />
+        <span id="endDate-error" class="field-error" role="alert" *ngIf="form.controls.endDate.invalid && form.controls.endDate.touched">La fecha final es obligatoria.</span>
+        <span id="dateRange-error" class="field-error" role="alert" *ngIf="form.errors?.['dateRange'] && (form.controls.startDate.touched || form.controls.endDate.touched)">La fecha de finalización debe ser posterior a la fecha de inicio.</span>
       </div>
 
       <div class="form-field" *ngIf="isAdmin">
