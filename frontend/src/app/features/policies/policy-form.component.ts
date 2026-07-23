@@ -8,6 +8,7 @@ import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { extractErrorMessage } from '../../shared/utils/http-error.util';
+import { dateRangeValidator } from '../../shared/validators/date-range.validator';
 import { Client } from '../../core/models/client.model';
 import { User } from '../../core/models/user.model';
 
@@ -35,17 +36,20 @@ export class PolicyFormComponent implements OnInit {
   protected readonly clients = signal<Client[]>([]);
   protected readonly agents = signal<User[]>([]);
 
-  protected readonly form = this.fb.nonNullable.group({
-    client: ['', [Validators.required]],
-    insuranceType: ['auto', [Validators.required]],
-    coverage: ['', [Validators.required]],
-    premium: [0, [Validators.required, Validators.min(0.01)]],
-    startDate: ['', [Validators.required]],
-    endDate: ['', [Validators.required]],
-    status: ['draft', [Validators.required]],
-    assignedAgent: [''],
-    notes: ['']
-  });
+  protected readonly form = this.fb.nonNullable.group(
+    {
+      client: ['', [Validators.required]],
+      insuranceType: ['auto', [Validators.required]],
+      coverage: ['', [Validators.required]],
+      premium: [0, [Validators.required, Validators.min(0.01)]],
+      startDate: ['', [Validators.required]],
+      endDate: ['', [Validators.required]],
+      status: ['draft', [Validators.required]],
+      assignedAgent: [''],
+      notes: ['']
+    },
+    { validators: dateRangeValidator('startDate', 'endDate') }
+  );
 
   get isAdmin(): boolean {
     return this.auth.role() === 'admin';

@@ -24,8 +24,11 @@
 
       <div class="form-field">
         <label for="eventDate">Fecha del evento</label>
-        <input id="eventDate" type="date" formControlName="eventDate" [class.invalid]="form.controls.eventDate.invalid && form.controls.eventDate.touched" />
-        <span class="field-error" *ngIf="form.controls.eventDate.invalid && form.controls.eventDate.touched">La fecha del evento es obligatoria y debe estar dentro de la vigencia de la póliza.</span>
+        <input id="eventDate" type="date" formControlName="eventDate" [attr.max]="maxEventDate"
+          [class.invalid]="form.controls.eventDate.invalid && form.controls.eventDate.touched"
+          [attr.aria-invalid]="form.controls.eventDate.invalid && form.controls.eventDate.touched ? true : null"
+          [attr.aria-describedby]="form.controls.eventDate.invalid && form.controls.eventDate.touched ? 'eventDate-error' : null" />
+        <span id="eventDate-error" class="field-error" role="alert" *ngIf="form.controls.eventDate.invalid && form.controls.eventDate.touched">{{ form.controls.eventDate.errors?.['futureDate'] ? 'La fecha del siniestro no puede ser posterior a la fecha actual.' : 'La fecha del evento es obligatoria y debe estar dentro de la vigencia de la póliza.' }}</span>
       </div>
 
       <div class="form-field">
