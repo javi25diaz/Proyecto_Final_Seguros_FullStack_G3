@@ -19,6 +19,20 @@ function assertStatusConsistency({ status, amountRequested, amountApproved, reso
   }
 }
 
+function assertValidClaimTransition(currentStatus, nextStatus) {
+  const allowedTransitions = {
+    received: ['under_analysis'],
+    under_analysis: ['approved', 'rejected'],
+    approved: [],
+    rejected: []
+  };
+
+  if (currentStatus === nextStatus) return;
+  if (!allowedTransitions[currentStatus]?.includes(nextStatus)) {
+    throw ApiError.conflict('No es posible realizar esta transición de estado de la reclamación', 'INVALID_CLAIM_TRANSITION');
+  }
+}
+
 const CLAIM_STATUS_LABELS = {
   received: 'Recibida',
   under_analysis: 'En análisis',
@@ -122,6 +136,10 @@ const update = asyncHandler(async (req, res) => {
 
   const statusChanged = status && status !== claim.status;
 
+  if (statusChanged) {
+    assertValidClaimTransition(claim.status, status);
+  }
+
   if (amountRequested !== undefined) claim.amountRequested = amountRequested;
   if (amountApproved !== undefined) claim.amountApproved = amountApproved;
   if (description) claim.description = description;
@@ -162,6 +180,10 @@ const changeStatus = asyncHandler(async (req, res) => {
   });
 
   const statusChanged = status !== claim.status;
+
+  if (statusChanged) {
+    assertValidClaimTransition(claim.status, status);
+  }
 
   claim.status = status;
   if (amountApproved !== undefined) claim.amountApproved = amountApproved;

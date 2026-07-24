@@ -18,6 +18,11 @@ const updateIncidentValidator = [
   body('status').optional().isIn(STATUSES).withMessage('Estado inválido')
 ];
 
+const statusValidator = [
+  param('id').isMongoId().withMessage('Identificador inválido'),
+  body('status').isIn(STATUSES).withMessage('Estado inválido')
+];
+
 const idParamValidator = [param('id').isMongoId().withMessage('Identificador inválido')];
 
-module.exports = { createIncidentValidator, updateIncidentValidator, idParamValidator };
+module.exports = { createIncidentValidator, updateIncidentValidator, statusValidator, idParamValidator };
