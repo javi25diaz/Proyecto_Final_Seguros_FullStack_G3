@@ -49,6 +49,11 @@ const create = asyncHandler(async (req, res) => {
 
   const policy = await Policy.findById(policyId);
   if (!policy) throw ApiError.badRequest('La póliza indicada no existe', 'POLICY_NOT_FOUND');
+  if (policy.status === 'cancelled') {
+    throw ApiError.conflict('La póliza está cancelada y no admite pagos.', 'POLICY_CANCELLED');
+  }
+
+  const parsedPaymentDate = assertValidPaymentDate(paymentDate);
 
   const receiptNumber = await generateBusinessId('PAY');
 
