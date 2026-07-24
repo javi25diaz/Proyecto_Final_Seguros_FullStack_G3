@@ -7,6 +7,19 @@ const { getPagination, getSort, escapeRegex } = require('../utils/pagination');
 const { generateBusinessId } = require('../services/sequence.service');
 const { createAutomaticNotification } = require('../services/notification.service');
 
+function assertValidPaymentDate(paymentDate) {
+  if (!paymentDate) {
+    throw ApiError.badRequest('La fecha de pago es obligatoria', 'PAYMENT_DATE_REQUIRED');
+  }
+
+  const parsedPaymentDate = new Date(paymentDate);
+  if (Number.isNaN(parsedPaymentDate.getTime())) {
+    throw ApiError.badRequest('Fecha de pago inválida', 'INVALID_PAYMENT_DATE');
+  }
+
+  return parsedPaymentDate;
+}
+
 const list = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
   const sort = getSort(req.query);

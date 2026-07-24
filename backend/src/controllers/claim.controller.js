@@ -83,6 +83,9 @@ const create = asyncHandler(async (req, res) => {
 
   const incident = await Incident.findById(incidentId);
   if (!incident) throw ApiError.badRequest('El siniestro indicado no existe', 'INCIDENT_NOT_FOUND');
+  if (incident.status === 'closed') {
+    throw ApiError.badRequest('No es posible crear una reclamación sobre un siniestro cerrado.', 'INCIDENT_CLOSED');
+  }
 
   const resolvedStatus = status || 'received';
   assertStatusConsistency({ status: resolvedStatus, amountRequested, amountApproved, resolutionNotes });
