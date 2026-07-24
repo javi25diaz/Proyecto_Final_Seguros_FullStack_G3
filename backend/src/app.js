@@ -22,7 +22,7 @@ app.use(cors({
       return;
     }
 
-    callback(new Error('Origen no permitido por CORS'));
+    callback(null, false);
   },
   credentials: true
 }));
