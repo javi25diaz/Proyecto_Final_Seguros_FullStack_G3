@@ -105,7 +105,7 @@ const update = asyncHandler(async (req, res) => {
   const wasPaid = payment.status === 'paid';
 
   if (amount !== undefined) payment.amount = amount;
-  if (paymentDate) payment.paymentDate = paymentDate;
+  if (paymentDate !== undefined) payment.paymentDate = assertValidPaymentDate(paymentDate);
   if (method) payment.method = method;
   if (reference !== undefined) payment.reference = reference;
   if (notes !== undefined) payment.notes = notes;
