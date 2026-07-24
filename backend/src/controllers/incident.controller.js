@@ -15,6 +15,19 @@ function assertEventDateWithinCoverage(eventDate, policy) {
   }
 }
 
+function assertValidIncidentTransition(currentStatus, nextStatus) {
+  const allowedTransitions = {
+    reported: ['under_review'],
+    under_review: ['closed'],
+    closed: []
+  };
+
+  if (currentStatus === nextStatus) return;
+  if (!allowedTransitions[currentStatus]?.includes(nextStatus)) {
+    throw ApiError.conflict('No es posible realizar esta transición de estado del siniestro', 'INVALID_INCIDENT_TRANSITION');
+  }
+}
+
 const list = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
   const sort = getSort(req.query);
@@ -103,7 +116,10 @@ const update = asyncHandler(async (req, res) => {
   if (evidenceUrl !== undefined) incident.evidenceUrl = evidenceUrl;
 
   const statusChanged = status && status !== incident.status;
-  if (statusChanged) incident.status = status;
+  if (statusChanged) {
+    assertValidIncidentTransition(incident.status, status);
+    incident.status = status;
+  }
 
   await incident.save();
 
@@ -121,6 +137,34 @@ const update = asyncHandler(async (req, res) => {
   ApiResponse.success(res, { message: 'Siniestro actualizado correctamente', data: { incident } });
 });
 
+const changeStatus = asyncHandler(async (req, res) => {
+  const incident = await Incident.findById(req.params.id);
+  if (!incident) throw ApiError.notFound('Siniestro no encontrado');
+
+  const { status } = req.body;
+  const statusChanged = status !== incident.status;
+
+  if (statusChanged) {
+    assertValidIncidentTransition(incident.status, status);
+    incident.status = status;
+  }
+
+  await incident.save();
+
+  if (statusChanged) {
+    await createAutomaticNotification({
+      message: `El siniestro ${incident.incidentNumber} cambió de estado a ${status}.`,
+      type: 'incident',
+      recipientUser: incident.reportedBy,
+      client: incident.client,
+      relatedEntityType: 'Incident',
+      relatedEntityId: incident._id
+    });
+  }
+
+  ApiResponse.success(res, { message: 'Estado del siniestro actualizado correctamente', data: { incident } });
+});
+
 const remove = asyncHandler(async (req, res) => {
   const incident = await Incident.findById(req.params.id);
   if (!incident) throw ApiError.notFound('Siniestro no encontrado');
@@ -135,4 +179,4 @@ const remove = asyncHandler(async (req, res) => {
   ApiResponse.success(res, { message: 'Siniestro eliminado correctamente' });
 });
 
-module.exports = { list, getById, create, update, remove };
+module.exports = { list, getById, create, update, changeStatus, remove };

@@ -12,20 +12,44 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" style="margin-bottom: 1.5rem;">
     <div class="form-grid">
       <div>
         <strong>Cliente:</strong>
-        <span *ngIf="clientRef(i.client) as c"> <a [routerLink]="['/clients', c._id]">{{ c.name }}</a></span>
+        <span *ngIf="clientRef(i.client) as c"> <a [routerLink]=['/clients', c._id]>{{ c.name }}</a></span>
       </div>
       <div>
         <strong>Póliza:</strong>
-        <span *ngIf="policyRef(i.policy) as pol"> <a [routerLink]="['/policies', pol._id]">{{ pol.policyNumber }}</a></span>
+        <span *ngIf="policyRef(i.policy) as pol"> <a [routerLink]=['/policies', pol._id]>{{ pol.policyNumber }}</a></span>
       </div>
       <div><strong>Fecha del evento:</strong> {{ i.eventDate | date: 'shortDate' }}</div>
       <div><strong>Estado:</strong> <app-status-badge [label]="incidentStatusMeta(i.status).label" [variant]="incidentStatusMeta(i.status).variant"></app-status-badge></div>
       <div *ngIf="i.evidenceUrl"><strong>Evidencia:</strong> <a [href]="i.evidenceUrl" target="_blank" rel="noopener">Ver documento</a></div>
     </div>
     <p class="text-muted">{{ i.description }}</p>
+  </div>
+
+  <div class="card" style="max-width: 560px;">
+    <h2>Cambiar estado</h2>
+    <div *ngIf="statusErrorMessage()" style="background: var(--color-danger-bg); color: var(--color-danger); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+      {{ statusErrorMessage() }}
+    </div>
+
+    <form [formGroup]="statusForm" (ngSubmit)="submitStatusChange()" novalidate>
+      <div class="form-field">
+        <label for="status">Nuevo estado</label>
+        <select id="status" formControlName="status">
+          <option value="reported">Reportado</option>
+          <option value="under_review">En revisión</option>
+          <option value="closed">Cerrado</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="changingStatus()">
+          {{ changingStatus() ? 'Actualizando...' : 'Actualizar estado' }}
+        </button>
+      </div>
+    </form>
   </div>
 </ng-container>

@@ -7,6 +7,19 @@ const { getPagination, getSort, escapeRegex } = require('../utils/pagination');
 const { generateBusinessId } = require('../services/sequence.service');
 const { createAutomaticNotification } = require('../services/notification.service');
 
+function assertValidPaymentDate(paymentDate) {
+  if (!paymentDate) {
+    throw ApiError.badRequest('La fecha de pago es obligatoria', 'PAYMENT_DATE_REQUIRED');
+  }
+
+  const parsedPaymentDate = new Date(paymentDate);
+  if (Number.isNaN(parsedPaymentDate.getTime())) {
+    throw ApiError.badRequest('Fecha de pago inválida', 'INVALID_PAYMENT_DATE');
+  }
+
+  return parsedPaymentDate;
+}
+
 const list = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
   const sort = getSort(req.query);
@@ -49,6 +62,11 @@ const create = asyncHandler(async (req, res) => {
 
   const policy = await Policy.findById(policyId);
   if (!policy) throw ApiError.badRequest('La póliza indicada no existe', 'POLICY_NOT_FOUND');
+  if (policy.status === 'cancelled') {
+    throw ApiError.conflict('La póliza está cancelada y no admite pagos.', 'POLICY_CANCELLED');
+  }
+
+  const parsedPaymentDate = assertValidPaymentDate(paymentDate);
 
   const receiptNumber = await generateBusinessId('PAY');
 
@@ -87,7 +105,7 @@ const update = asyncHandler(async (req, res) => {
   const wasPaid = payment.status === 'paid';
 
   if (amount !== undefined) payment.amount = amount;
-  if (paymentDate) payment.paymentDate = paymentDate;
+  if (paymentDate !== undefined) payment.paymentDate = assertValidPaymentDate(paymentDate);
   if (method) payment.method = method;
   if (reference !== undefined) payment.reference = reference;
   if (notes !== undefined) payment.notes = notes;

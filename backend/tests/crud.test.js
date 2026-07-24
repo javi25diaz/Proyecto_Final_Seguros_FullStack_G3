@@ -224,6 +224,8 @@ describe('Claims', () => {
       description: 'Reparacion de vehiculo'
     });
 
+    await request(app).patch(`/api/claims/${claimRes.body.data.claim._id}/status`).set('Authorization', `Bearer ${token}`).send({ status: 'under_analysis' });
+
     const res = await request(app).patch(`/api/claims/${claimRes.body.data.claim._id}/status`).set('Authorization', `Bearer ${token}`).send({ status: 'approved', amountApproved: 1200 });
     expect(res.status).toBe(200);
     expect(res.body.data.claim.status).toBe('approved');
