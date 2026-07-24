@@ -16,11 +16,11 @@
     <div class="form-grid">
       <div>
         <strong>Cliente:</strong>
-        <span *ngIf="clientRef(i.client) as c"> <a [routerLink]=['/clients', c._id]>{{ c.name }}</a></span>
+        <span *ngIf="clientRef(i.client) as c"> <a [routerLink]="['/clients', c._id]">{{ c.name }}</a></span>
       </div>
       <div>
         <strong>Póliza:</strong>
-        <span *ngIf="policyRef(i.policy) as pol"> <a [routerLink]=['/policies', pol._id]>{{ pol.policyNumber }}</a></span>
+        <span *ngIf="policyRef(i.policy) as pol"> <a [routerLink]="['/policies', pol._id]">{{ pol.policyNumber }}</a></span>
       </div>
       <div><strong>Fecha del evento:</strong> {{ i.eventDate | date: 'shortDate' }}</div>
       <div><strong>Estado:</strong> <app-status-badge [label]="incidentStatusMeta(i.status).label" [variant]="incidentStatusMeta(i.status).variant"></app-status-badge></div>
